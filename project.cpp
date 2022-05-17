@@ -1,3 +1,5 @@
+*/
+
 #incluir <stdio.h>
 #incluir <windows.h>
 #incluir <stdlib.h>
